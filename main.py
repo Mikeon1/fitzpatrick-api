@@ -15,6 +15,7 @@ no mesmo diretório deste script (ou ajuste MODEL_PATH abaixo).
 """
 
 import io
+import gc
 import logging
 
 import torch
@@ -29,14 +30,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # ============================================================
+# Otimização de RAM do PyTorch para contêineres limitados (Render)
+# ============================================================
+torch.set_num_threads(1)
+
+# ============================================================
 # Configurações
 # ============================================================
 MODEL_PATH = "modelo_fitzpatrick_resnet18.pth"
 NUM_CLASSES = 6
-DEVICE = torch.device("cpu")  # conforme solicitado: modo CPU
+DEVICE = torch.device("cpu")  # modo CPU
 
-# Rótulos na mesma ordem usada no treino (label = group - 1, ou seja,
-# índice 0 = Fototipo 1 / Tipo I, ... índice 5 = Fototipo 6 / Tipo VI)
+# Rótulos na mesma ordem usada no treino (label = group - 1)
 CLASS_NAMES = ["Tipo 1", "Tipo 2", "Tipo 3", "Tipo 4", "Tipo 5", "Tipo 6"]
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/webp"}
@@ -66,25 +71,21 @@ def preprocess_image(image_bytes: bytes) -> torch.Tensor:
         )
     
     # --- CROP AUTOMÁTICO ---
-    # Corta 25% das bordas esquerda e direita para eliminar o fundo branco/externo
     w, h = image.size
     crop_box = (w * 0.25, h * 0.10, w * 0.75, h * 0.90)
     image_cropped = image.crop(crop_box)
     
-    # Aplica o redimensionamento e a normalização ImageNet
     tensor = transform_model(image_cropped)
     return tensor.unsqueeze(0)  # [1, 3, 224, 224]
 
 
 # ============================================================
-# Modelo
+# Modelo Otimizado
 # ============================================================
 def build_model(num_classes: int = NUM_CLASSES) -> nn.Module:
-    """Recria a arquitetura ResNet-18 com o cabeçalho customizado (fc)
-    usado durante o treinamento."""
+    """Recria a arquitetura ResNet-18 com o cabeçalho customizado (fc)."""
     model = models.resnet18(weights=None)
     
-    # Ajusta o cabeçalho fc.0, fc.1, fc.4 conforme treinado no checkpoint
     in_features = model.fc.in_features  # 512 para ResNet-18
     model.fc = nn.Sequential(
         nn.Linear(in_features, 256),  # fc.0
@@ -106,8 +107,17 @@ def load_model(model_path: str = MODEL_PATH) -> nn.Module:
             f"Arquivo de pesos '{model_path}' não encontrado. "
             "Coloque o .pth no mesmo diretório da API ou ajuste MODEL_PATH."
         )
+    
     model.to(DEVICE)
     model.eval()
+    
+    # Desativa gradientes de todos os parâmetros para economizar memória
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # Força a limpeza de memória no Garbage Collector
+    gc.collect()
+    
     return model
 
 
@@ -206,9 +216,6 @@ async def predict(file: UploadFile = File(...)):
     )
 
 
-# ============================================================
-# Execução direta (alternativa ao comando uvicorn no terminal)
-# ============================================================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
