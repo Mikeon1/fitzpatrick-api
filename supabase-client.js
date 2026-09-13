@@ -22,7 +22,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // Level Security habilitada (ver schema.sql) restringindo o que
 // essa chave pode fazer — neste caso, apenas inserir registros.
 const SUPABASE_URL = "https://rbmysunolucwzkdyvlgm.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_LxwD7RhhAUK8TdtZcz0erg_PxYxRzdR";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJibXlzdW5vbHVjd3prZHl2bGdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzMTA0ODMsImV4cCI6MjEwNDg4NjQ4M30.5_A0NYqpg8e2cA21lJY7Y_-w-12zQUq7p3-2U3DXSIA";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
