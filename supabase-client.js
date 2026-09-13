@@ -49,19 +49,24 @@ async function enviarRespostaFitzpatrick(payload) {
     probabilidades_json: payload.probabilidades_json ?? null,
   };
 
-  const { data, error } = await supabase
+  // Importante: NÃO encadear .select() aqui. A política de RLS só libera
+  // "insert" para o role anon (de propósito — visitantes não podem ler
+  // respostas de outros). Se pedirmos a linha de volta com .select(), o
+  // Postgres também precisa validar uma política de leitura para essa
+  // linha; como ela não existe, o insert falha com o erro
+  // "new row violates row-level security policy", mesmo que o dado em si
+  // esteja sendo salvo corretamente.
+  const { error } = await supabase
     .from("respostas_fitzpatrick")
-    .insert(registro)
-    .select()
-    .single();
+    .insert(registro);
 
   if (error) {
     console.error("Erro ao salvar resposta no Supabase:", error.message);
-    return { data: null, error };
+    return { error };
   }
 
-  console.log("Resposta salva com sucesso:", data.id);
-  return { data, error: null };
+  console.log("Resposta salva com sucesso.");
+  return { error: null };
 }
 
 // Expostas globalmente para uso pelo script inline de index.html
