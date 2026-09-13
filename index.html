@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Retrato Brasileiro — Mapeamento de Fototipos de Pele</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          usp: {
+            ink:    '#0F1B2D',
+            blue:   '#00295B',
+            blue2:  '#0B4C8C',
+            sky:    '#2E7BC4',
+            paper:  '#F6F7F9',
+            line:   '#DFE4EA',
+            mute:   '#5B6B7C',
+            gold:   '#C99A3B',
+            good:   '#2F7D5D',
+            warn:   '#B8562E',
+          },
+        },
+        fontFamily: {
+          serif: ['"Lora"', 'serif'],
+          sans: ['"Inter"', 'system-ui', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #F6F7F9; color: #0F1B2D; }
+  .font-display { font-family: 'Lora', serif; }
+
+  /* Focus visibility kept intentional and consistent across custom controls */
+  :focus-visible { outline: 2px solid #2E7BC4; outline-offset: 2px; }
+
+  .step-panel { display: none; }
+  .step-panel.active {
+    display: block;
+    animation: rise .45s cubic-bezier(.2,.7,.2,1);
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .step-panel.active { animation: none; }
+  }
+
+  .option-card {
+    border: 1px solid #DFE4EA;
+    background: #fff;
+    transition: border-color .15s ease, background-color .15s ease;
+  }
+  .option-card:hover { border-color: #2E7BC4; }
+  input[type="radio"]:checked + .option-card {
+    border-color: #00295B;
+    background: #EFF4FA;
+  }
+  input[type="radio"]:focus-visible + .option-card {
+    outline: 2px solid #2E7BC4;
+    outline-offset: 2px;
+  }
+
+  .bar-track { background: #E7EBF0; }
+  .bar-fill { transition: width 1s cubic-bezier(.16,.84,.44,1); }
+
+  .dropzone { border: 1.5px dashed #B9C3CF; transition: border-color .15s ease, background-color .15s ease; }
+  .dropzone.drag-over { border-color: #00295B; background: #EFF4FA; }
+
+  .swatch { box-shadow: inset 0 0 0 1px rgba(15,27,45,.08); }
+
+  .spinner {
+    border: 2.5px solid #DFE4EA;
+    border-top-color: #00295B;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============================================================ -->
+<!-- HEADER -->
+<!-- ============================================================ -->
+<header class="border-b border-usp-line bg-white">
+  <div class="max-w-3xl mx-auto px-6 py-6 flex items-center justify-between">
+    <div>
+      <p class="text-xs tracking-wide text-usp-mute">FFCLRP · Universidade de São Paulo</p>
+      <h1 class="font-display text-2xl text-usp-blue mt-0.5">Retrato Brasileiro</h1>
+    </div>
+    <div class="hidden sm:flex items-center gap-2 text-xs text-usp-mute">
+      <span class="w-2 h-2 rounded-full bg-usp-good"></span>
+      Projeto de pesquisa em pigmentação da pele
+    </div>
+  </div>
+</header>
+
+<main class="max-w-3xl mx-auto px-6 py-10">
+
+  <!-- Intro -->
+  <p class="text-usp-mute leading-relaxed max-w-xl">
+    Este estudo relaciona a escala Fitzpatrick, autorrelatada por questionário, com uma
+    classificação automática por imagem do antebraço. Sua participação leva cerca de dois minutos
+    e passa por três etapas.
+  </p>
+
+  <!-- ============================================================ -->
+  <!-- STEPPER NAV -->
+  <!-- ============================================================ -->
+  <nav aria-label="Progresso" class="mt-8 mb-10">
+    <ol class="flex items-center">
+      <li class="flex items-center flex-1">
+        <button type="button" data-goto="1" class="step-dot-btn flex items-center gap-3 text-left group">
+          <span data-dot="1" class="step-dot flex items-center justify-center w-8 h-8 rounded-full border-2 border-usp-blue bg-usp-blue text-white text-sm font-semibold shrink-0">1</span>
+          <span class="hidden sm:block">
+            <span data-label="1" class="block text-sm font-semibold text-usp-blue">Questionário</span>
+            <span class="block text-xs text-usp-mute">Escala Fitzpatrick</span>
+          </span>
+        </button>
+        <span class="flex-1 h-px bg-usp-line mx-3"></span>
+      </li>
+      <li class="flex items-center flex-1">
+        <button type="button" data-goto="2" class="step-dot-btn flex items-center gap-3 text-left" disabled>
+          <span data-dot="2" class="step-dot flex items-center justify-center w-8 h-8 rounded-full border-2 border-usp-line text-usp-mute text-sm font-semibold shrink-0">2</span>
+          <span class="hidden sm:block">
+            <span data-label="2" class="block text-sm font-semibold text-usp-mute">Imagem</span>
+            <span class="block text-xs text-usp-mute">Foto do antebraço</span>
+          </span>
+        </button>
+        <span class="flex-1 h-px bg-usp-line mx-3"></span>
+      </li>
+      <li class="flex items-center">
+        <button type="button" data-goto="3" class="step-dot-btn flex items-center gap-3 text-left" disabled>
+          <span data-dot="3" class="step-dot flex items-center justify-center w-8 h-8 rounded-full border-2 border-usp-line text-usp-mute text-sm font-semibold shrink-0">3</span>
+          <span class="hidden sm:block">
+            <span data-label="3" class="block text-sm font-semibold text-usp-mute">Resultado</span>
+            <span class="block text-xs text-usp-mute">Comparação</span>
+          </span>
+        </button>
+      </li>
+    </ol>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- STEP 1 — QUESTIONNAIRE -->
+  <!-- ============================================================ -->
+  <section id="panel-1" class="step-panel active">
+    <div class="bg-white border border-usp-line rounded-lg p-6 sm:p-8">
+      <h2 class="font-display text-xl text-usp-ink">Questionário da escala Fitzpatrick</h2>
+      <p class="text-sm text-usp-mute mt-1 mb-6">Responda com base na reação natural da sua pele, sem uso de protetor solar.</p>
+
+      <form id="quiz-form" class="space-y-8">
+        <!-- Q1 -->
+        <fieldset>
+          <legend class="text-sm font-semibold text-usp-ink mb-3">1. Qual a sua reação à exposição solar direta, na primeira hora, sem proteção?</legend>
+          <div class="grid gap-2" data-question="q1">
+            <label class="block cursor-pointer">
+              <input type="radio" name="q1" value="0" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Sempre se queima, nunca bronzeia</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q1" value="1" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Queima com facilidade, bronzeia muito pouco</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q1" value="2" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Queima moderadamente, bronzeia de forma gradual</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q1" value="3" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Queima raramente, bronzeia bem</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q1" value="4" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Nunca queima, bronzeia intensamente</div>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Q2 -->
+        <fieldset>
+          <legend class="text-sm font-semibold text-usp-ink mb-3">2. Qual a cor natural dos seus olhos?</legend>
+          <div class="grid gap-2" data-question="q2">
+            <label class="block cursor-pointer">
+              <input type="radio" name="q2" value="0" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Azul ou verde claro</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q2" value="1" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Verde ou avelã</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q2" value="2" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Castanho claro</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q2" value="3" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Castanho escuro</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q2" value="4" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Preto</div>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Q3 -->
+        <fieldset>
+          <legend class="text-sm font-semibold text-usp-ink mb-3">3. Como sua pele reage algumas horas após um dia inteiro de exposição solar?</legend>
+          <div class="grid gap-2" data-question="q3">
+            <label class="block cursor-pointer">
+              <input type="radio" name="q3" value="0" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Fica avermelhada e descama</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q3" value="1" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Bronzeia muito pouco</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q3" value="2" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Bronzeia de forma moderada e uniforme</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q3" value="3" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Bronzeia bem, com tom acastanhado</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q3" value="4" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Bronzeia profundamente, tom muito escuro</div>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Q4 -->
+        <fieldset>
+          <legend class="text-sm font-semibold text-usp-ink mb-3">4. Qual a cor natural da sua pele em áreas não expostas ao sol?</legend>
+          <div class="grid gap-2" data-question="q4">
+            <label class="block cursor-pointer">
+              <input type="radio" name="q4" value="0" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Muito clara, quase leitosa</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q4" value="1" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Clara</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q4" value="2" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Clara a morena clara</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q4" value="3" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Morena moderada</div>
+            </label>
+            <label class="block cursor-pointer">
+              <input type="radio" name="q4" value="4" class="sr-only peer" />
+              <div class="option-card rounded-md px-4 py-3 text-sm">Morena escura</div>
+            </label>
+          </div>
+        </fieldset>
+      </form>
+
+      <!-- Result preview -->
+      <div id="quiz-result" class="hidden mt-8 pt-6 border-t border-usp-line">
+        <p class="text-xs text-usp-mute">Fototipo autodeclarado, com base nas suas respostas</p>
+        <div class="flex items-center gap-3 mt-2">
+          <span id="quiz-swatch" class="swatch w-9 h-9 rounded-full shrink-0"></span>
+          <span id="quiz-type-label" class="font-display text-lg text-usp-ink"></span>
+        </div>
+      </div>
+
+      <p id="quiz-hint" class="text-xs text-usp-mute mt-6">Responda às quatro perguntas para continuar.</p>
+
+      <div class="mt-4 flex justify-end">
+        <button type="button" id="btn-to-step2" disabled
+          class="inline-flex items-center gap-2 bg-usp-blue text-white text-sm font-semibold px-5 py-2.5 rounded-md
+                 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-usp-blue2 transition-colors">
+          Continuar para o envio da imagem
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- STEP 2 — IMAGE UPLOAD -->
+  <!-- ============================================================ -->
+  <section id="panel-2" class="step-panel">
+    <div class="bg-white border border-usp-line rounded-lg p-6 sm:p-8">
+      <h2 class="font-display text-xl text-usp-ink">Envio da imagem do antebraço</h2>
+      <p class="text-sm text-usp-mute mt-1 mb-6">A foto é analisada por um classificador automático treinado para a escala Fitzpatrick.</p>
+
+      <ul class="grid sm:grid-cols-3 gap-3 mb-6">
+        <li class="border border-usp-line rounded-md p-3 text-xs text-usp-mute leading-relaxed">
+          <span class="block text-usp-ink font-semibold mb-1">Luz natural indireta</span>
+          Evite flash direto ou luz amarelada; prefira luz de janela, sem sol direto na pele.
+        </li>
+        <li class="border border-usp-line rounded-md p-3 text-xs text-usp-mute leading-relaxed">
+          <span class="block text-usp-ink font-semibold mb-1">Só o antebraço</span>
+          Enquadre a região interna do antebraço, preenchendo a maior parte da foto.
+        </li>
+        <li class="border border-usp-line rounded-md p-3 text-xs text-usp-mute leading-relaxed">
+          <span class="block text-usp-ink font-semibold mb-1">Sem acessórios</span>
+          Retire relógios, pulseiras ou mangas de roupa que cubram parte da pele.
+        </li>
+      </ul>
+
+      <div id="dropzone" class="dropzone rounded-lg p-8 text-center cursor-pointer" tabindex="0" role="button" aria-label="Selecionar imagem do antebraço">
+        <input type="file" id="file-input" accept="image/png, image/jpeg, image/webp" class="sr-only" />
+        <div id="dropzone-empty">
+          <svg class="mx-auto mb-3" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#00295B" stroke-width="1.6">
+            <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="text-sm text-usp-ink font-medium">Arraste a imagem aqui ou clique para selecionar</p>
+          <p class="text-xs text-usp-mute mt-1">JPEG, PNG ou WEBP</p>
+        </div>
+        <div id="dropzone-preview" class="hidden">
+          <img id="preview-img" src="" alt="Pré-visualização da imagem enviada" class="mx-auto max-h-56 rounded-md object-contain" />
+          <p class="text-xs text-usp-mute mt-3">Clique para trocar a imagem</p>
+        </div>
+      </div>
+
+      <p id="upload-error" class="hidden text-sm text-usp-warn mt-3"></p>
+
+      <div class="mt-6 flex items-center justify-between">
+        <button type="button" id="btn-back-1" class="text-sm text-usp-mute hover:text-usp-ink transition-colors">
+          Voltar ao questionário
+        </button>
+        <button type="button" id="btn-analyze" disabled
+          class="inline-flex items-center gap-2 bg-usp-blue text-white text-sm font-semibold px-5 py-2.5 rounded-md
+                 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-usp-blue2 transition-colors">
+          <span id="analyze-spinner" class="spinner hidden w-4 h-4 rounded-full"></span>
+          <span id="analyze-label">Analisar imagem com IA</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- STEP 3 — RESULTS -->
+  <!-- ============================================================ -->
+  <section id="panel-3" class="step-panel">
+    <div class="bg-white border border-usp-line rounded-lg p-6 sm:p-8">
+      <h2 class="font-display text-xl text-usp-ink">Comparação de resultados</h2>
+      <p class="text-sm text-usp-mute mt-1 mb-6">Autodeclaração pelo questionário, ao lado da classificação automática por imagem.</p>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-8">
+        <div class="border border-usp-line rounded-md p-4">
+          <p class="text-xs text-usp-mute mb-2">Autodeclarado (questionário)</p>
+          <div class="flex items-center gap-3">
+            <span id="result-quiz-swatch" class="swatch w-9 h-9 rounded-full shrink-0"></span>
+            <span id="result-quiz-label" class="font-display text-lg text-usp-ink"></span>
+          </div>
+        </div>
+        <div class="border border-usp-line rounded-md p-4">
+          <p class="text-xs text-usp-mute mb-2">Predição da IA</p>
+          <div class="flex items-center gap-3">
+            <span id="result-ai-swatch" class="swatch w-9 h-9 rounded-full shrink-0"></span>
+            <span id="result-ai-label" class="font-display text-lg text-usp-ink"></span>
+            <span id="result-ai-confidence" class="text-xs text-usp-mute ml-auto"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="agreement-banner" class="hidden rounded-md px-4 py-3 text-sm mb-8"></div>
+
+      <div class="mb-8">
+        <p class="text-sm font-semibold text-usp-ink mb-3">Probabilidade por fototipo</p>
+        <div id="prob-bars" class="space-y-2.5"></div>
+      </div>
+
+      <div class="pt-6 border-t border-usp-line">
+        <p class="text-sm font-semibold text-usp-ink mb-3">O resultado da IA condiz com o seu tom de pele?</p>
+        <div class="flex flex-wrap gap-2" id="agreement-buttons">
+          <button type="button" data-agree="sim" class="agreement-btn border border-usp-line rounded-md px-4 py-2 text-sm hover:border-usp-blue transition-colors">Sim</button>
+          <button type="button" data-agree="parcialmente" class="agreement-btn border border-usp-line rounded-md px-4 py-2 text-sm hover:border-usp-blue transition-colors">Parcialmente</button>
+          <button type="button" data-agree="nao" class="agreement-btn border border-usp-line rounded-md px-4 py-2 text-sm hover:border-usp-blue transition-colors">Não</button>
+        </div>
+
+        <label for="comment" class="block text-sm font-semibold text-usp-ink mt-6 mb-2">Comentários adicionais (opcional)</label>
+        <textarea id="comment" rows="3" placeholder="Alguma observação sobre a foto ou o resultado..."
+          class="w-full border border-usp-line rounded-md px-3 py-2 text-sm resize-none focus-visible:outline-2 focus-visible:outline-usp-sky"></textarea>
+
+        <div class="mt-6 flex items-center justify-between">
+          <button type="button" id="btn-back-2" class="text-sm text-usp-mute hover:text-usp-ink transition-colors">
+            Enviar outra imagem
+          </button>
+          <button type="button" id="btn-submit"
+            class="inline-flex items-center gap-2 bg-usp-blue text-white text-sm font-semibold px-5 py-2.5 rounded-md hover:bg-usp-blue2 transition-colors">
+            Enviar avaliação
+          </button>
+        </div>
+
+        <p id="submit-confirmation" class="hidden mt-4 text-sm text-usp-good">Avaliação registrada. Obrigado por contribuir com a pesquisa.</p>
+        <p id="submit-error" class="hidden mt-4 text-sm text-usp-warn">Não foi possível salvar sua avaliação. Tente novamente.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="max-w-3xl mx-auto px-6 py-10 text-xs text-usp-mute">
+  Retrato Brasileiro — Faculdade de Filosofia, Ciências e Letras de Ribeirão Preto, USP.
+</footer>
+
+<!-- Integração com Supabase: ver supabase-client.js para configurar URL/chave -->
+<script type="module" src="supabase-client.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  // ------------------------------------------------------------
+  // Config
+  // ------------------------------------------------------------
+  // Ajuste para o endereço real da API quando publicada.
+  const API_URL = "http://localhost:8000/predict";
+
+  const TYPE_NAMES = {
+    1: "Tipo I",
+    2: "Tipo II",
+    3: "Tipo III",
+    4: "Tipo IV",
+    5: "Tipo V",
+    6: "Tipo VI",
+  };
+
+  // Faixas ilustrativas de tom para cada fototipo (não são valores clínicos).
+  const TYPE_SWATCHES = {
+    1: "#FFE3C6",
+    2: "#F0C79C",
+    3: "#D8A377",
+    4: "#B67D4E",
+    5: "#8B5A2B",
+    6: "#5C3A21",
+  };
+
+  const state = {
+    currentStep: 1,
+    maxUnlockedStep: 1,
+    quizScore: null,
+    quizType: null,
+    imageFile: null,
+    aiResult: null, // { predicao_principal, confianca, probabilidades }
+  };
+
+  // ------------------------------------------------------------
+  // Stepper navigation
+  // ------------------------------------------------------------
+  function goToStep(step) {
+    if (step > state.maxUnlockedStep) return;
+    state.currentStep = step;
+
+    document.querySelectorAll(".step-panel").forEach((panel) => {
+      panel.classList.toggle("active", panel.id === "panel-" + step);
+    });
+
+    document.querySelectorAll(".step-dot-btn").forEach((btn) => {
+      const n = Number(btn.dataset.goto);
+      const dot = btn.querySelector("[data-dot]");
+      const label = btn.querySelector("[data-label]");
+      const unlocked = n <= state.maxUnlockedStep;
+      btn.disabled = !unlocked;
+
+      if (n === step) {
+        dot.className = "step-dot flex items-center justify-center w-8 h-8 rounded-full border-2 border-usp-blue bg-usp-blue text-white text-sm font-semibold shrink-0";
+        label.className = "block text-sm font-semibold text-usp-blue";
+      } else if (n < step) {
+        dot.className = "step-dot flex items-center justify-center w-8 h-8 rounded-full border-2 border-usp-blue bg-white text-usp-blue text-sm font-semibold shrink-0";
+        label.className = "block text-sm font-semibold text-usp-ink";
+      } else {
+        dot.className = "step-dot flex items-center justify-center w-8 h-8 rounded-full border-2 border-usp-line text-usp-mute text-sm font-semibold shrink-0";
+        label.className = "block text-sm font-semibold text-usp-mute";
+      }
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function unlockStep(step) {
+    state.maxUnlockedStep = Math.max(state.maxUnlockedStep, step);
+  }
+
+  document.querySelectorAll(".step-dot-btn").forEach((btn) => {
+    btn.addEventListener("click", () => goToStep(Number(btn.dataset.goto)));
+  });
+
+  // ------------------------------------------------------------
+  // Step 1 — Questionnaire scoring
+  // ------------------------------------------------------------
+  function scoreToType(score) {
+    // 4 perguntas, 0–4 pontos cada, total de 0 a 16.
+    if (score <= 2) return 1;
+    if (score <= 5) return 2;
+    if (score <= 8) return 3;
+    if (score <= 11) return 4;
+    if (score <= 14) return 5;
+    return 6;
+  }
+
+  function updateQuizResult() {
+    const answered = ["q1", "q2", "q3", "q4"].every(
+      (name) => document.querySelector('input[name="' + name + '"]:checked') !== null
+    );
+
+    const hint = document.getElementById("quiz-hint");
+    const resultBox = document.getElementById("quiz-result");
+    const continueBtn = document.getElementById("btn-to-step2");
+
+    if (!answered) {
+      resultBox.classList.add("hidden");
+      hint.classList.remove("hidden");
+      continueBtn.disabled = true;
+      state.quizScore = null;
+      state.quizType = null;
+      return;
+    }
+
+    let total = 0;
+    ["q1", "q2", "q3", "q4"].forEach((name) => {
+      total += Number(document.querySelector('input[name="' + name + '"]:checked').value);
+    });
+
+    const type = scoreToType(total);
+    state.quizScore = total;
+    state.quizType = type;
+
+    document.getElementById("quiz-swatch").style.background = TYPE_SWATCHES[type];
+    document.getElementById("quiz-type-label").textContent = TYPE_NAMES[type];
+
+    resultBox.classList.remove("hidden");
+    hint.classList.add("hidden");
+    continueBtn.disabled = false;
+  }
+
+  document.getElementById("quiz-form").addEventListener("change", updateQuizResult);
+
+  document.getElementById("btn-to-step2").addEventListener("click", () => {
+    if (state.quizType === null) return;
+    unlockStep(2);
+    goToStep(2);
+  });
+
+  // ------------------------------------------------------------
+  // Step 2 — Upload
+  // ------------------------------------------------------------
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("file-input");
+  const dropzoneEmpty = document.getElementById("dropzone-empty");
+  const dropzonePreview = document.getElementById("dropzone-preview");
+  const previewImg = document.getElementById("preview-img");
+  const uploadError = document.getElementById("upload-error");
+  const analyzeBtn = document.getElementById("btn-analyze");
+
+  const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+  function showUploadError(message) {
+    uploadError.textContent = message;
+    uploadError.classList.remove("hidden");
+  }
+
+  function clearUploadError() {
+    uploadError.classList.add("hidden");
+  }
+
+  function handleFile(file) {
+    clearUploadError();
+
+    if (!file) return;
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      showUploadError("Formato não suportado. Envie uma imagem JPEG, PNG ou WEBP.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      showUploadError("Arquivo muito grande. O limite é 15 MB.");
+      return;
+    }
+
+    state.imageFile = file;
+    const url = URL.createObjectURL(file);
+    previewImg.src = url;
+    dropzoneEmpty.classList.add("hidden");
+    dropzonePreview.classList.remove("hidden");
+    analyzeBtn.disabled = false;
+  }
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+  fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+
+  ["dragenter", "dragover"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add("drag-over");
+    });
+  });
+  ["dragleave", "drop"].forEach((evt) => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("drag-over");
+    });
+  });
+  dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files[0];
+    handleFile(file);
+  });
+
+  document.getElementById("btn-back-1").addEventListener("click", () => goToStep(1));
+
+  // ------------------------------------------------------------
+  // Step 2 -> API call
+  // ------------------------------------------------------------
+  const analyzeLabel = document.getElementById("analyze-label");
+  const analyzeSpinner = document.getElementById("analyze-spinner");
+
+  function setAnalyzing(isAnalyzing) {
+    analyzeBtn.disabled = isAnalyzing;
+    analyzeSpinner.classList.toggle("hidden", !isAnalyzing);
+    analyzeLabel.textContent = isAnalyzing ? "Analisando..." : "Analisar imagem com IA";
+  }
+
+  async function analyzeImage() {
+    if (!state.imageFile) return;
+    clearUploadError();
+    setAnalyzing(true);
+
+    const formData = new FormData();
+    formData.append("file", state.imageFile);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body && body.detail ? body.detail : "Não foi possível analisar a imagem.");
+      }
+
+      const data = await response.json();
+      state.aiResult = data;
+      renderResults();
+      unlockStep(3);
+      goToStep(3);
+    } catch (err) {
+      showUploadError(
+        err.message === "Failed to fetch"
+          ? "Não foi possível conectar à API de análise. Verifique se o serviço está no ar."
+          : err.message
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  analyzeBtn.addEventListener("click", analyzeImage);
+
+  // ------------------------------------------------------------
+  // Step 3 — Results
+  // ------------------------------------------------------------
+  function typeNumberFromLabel(label) {
+    // "Tipo 3" -> 3   (compatível com o formato retornado pela API)
+    const match = String(label).match(/\d+/);
+    return match ? Number(match[0]) : null;
+  }
+
+  function renderResults() {
+    // Autodeclarado
+    document.getElementById("result-quiz-swatch").style.background = TYPE_SWATCHES[state.quizType];
+    document.getElementById("result-quiz-label").textContent = TYPE_NAMES[state.quizType];
+
+    // IA
+    const aiTypeNum = typeNumberFromLabel(state.aiResult.predicao_principal);
+    document.getElementById("result-ai-swatch").style.background = TYPE_SWATCHES[aiTypeNum] || "#ccc";
+    document.getElementById("result-ai-label").textContent = state.aiResult.predicao_principal;
+    document.getElementById("result-ai-confidence").textContent =
+      "confiança " + state.aiResult.confianca.toFixed(1) + "%";
+
+    // Agreement banner
+    const banner = document.getElementById("agreement-banner");
+    const diff = Math.abs((aiTypeNum || 0) - state.quizType);
+    banner.classList.remove("hidden");
+    if (diff === 0) {
+      banner.className = "rounded-md px-4 py-3 text-sm mb-8 bg-[#EAF4EE] text-usp-good";
+      banner.textContent = "A predição da IA coincide exatamente com o fototipo autodeclarado.";
+    } else if (diff === 1) {
+      banner.className = "rounded-md px-4 py-3 text-sm mb-8 bg-[#FBF3E8] text-[#8A5A16]";
+      banner.textContent = "A predição da IA diverge em apenas um fototipo do autodeclarado.";
+    } else {
+      banner.className = "rounded-md px-4 py-3 text-sm mb-8 bg-[#FBEEE9] text-usp-warn";
+      banner.textContent = "A predição da IA diverge em mais de um fototipo do autodeclarado.";
+    }
+
+    // Probability bars
+    const barsContainer = document.getElementById("prob-bars");
+    barsContainer.innerHTML = "";
+
+    const probs = state.aiResult.probabilidades || {};
+    const orderedKeys = Object.keys(probs).sort((a, b) => {
+      const na = typeNumberFromLabel(a) || 0;
+      const nb = typeNumberFromLabel(b) || 0;
+      return na - nb;
+    });
+
+    orderedKeys.forEach((key) => {
+      const value = probs[key];
+      const typeNum = typeNumberFromLabel(key);
+
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-3";
+      row.innerHTML =
+        '<span class="w-16 text-xs text-usp-mute shrink-0">' + key + '</span>' +
+        '<span class="swatch w-3.5 h-3.5 rounded-full shrink-0" style="background:' + (TYPE_SWATCHES[typeNum] || "#ccc") + '"></span>' +
+        '<div class="bar-track flex-1 h-2.5 rounded-full overflow-hidden">' +
+          '<div class="bar-fill h-full rounded-full" style="width:0%; background:#00295B"></div>' +
+        '</div>' +
+        '<span class="w-12 text-right text-xs text-usp-mute shrink-0">' + value.toFixed(1) + '%</span>';
+
+      barsContainer.appendChild(row);
+
+      requestAnimationFrame(() => {
+        row.querySelector(".bar-fill").style.width = value + "%";
+      });
+    });
+  }
+
+  document.getElementById("btn-back-2").addEventListener("click", () => goToStep(2));
+
+  // ------------------------------------------------------------
+  // Step 3 — Agreement + submit
+  // ------------------------------------------------------------
+  let selectedAgreement = null;
+
+  document.querySelectorAll(".agreement-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedAgreement = btn.dataset.agree;
+      document.querySelectorAll(".agreement-btn").forEach((b) => {
+        b.className = "agreement-btn border border-usp-line rounded-md px-4 py-2 text-sm hover:border-usp-blue transition-colors";
+      });
+      btn.className = "agreement-btn border-2 border-usp-blue bg-[#EFF4FA] text-usp-blue rounded-md px-4 py-2 text-sm font-semibold transition-colors";
+    });
+  });
+
+  const submitBtn = document.getElementById("btn-submit");
+  const submitConfirmation = document.getElementById("submit-confirmation");
+  const submitError = document.getElementById("submit-error");
+
+  submitBtn.addEventListener("click", async () => {
+    if (!state.aiResult) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Enviando...";
+    submitError.classList.add("hidden");
+
+    const registro = {
+      fototipo_questionario: TYPE_NAMES[state.quizType],
+      fototipo_ia: state.aiResult.predicao_principal,
+      confianca_ia: state.aiResult.confianca,
+      avaliacao_usuario: selectedAgreement,
+      probabilidades_json: state.aiResult.probabilidades,
+    };
+
+    // window.enviarRespostaFitzpatrick vem de supabase-client.js (carregado como módulo).
+    const { error } = await window.enviarRespostaFitzpatrick(registro);
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Enviar avaliação";
+
+    if (error) {
+      submitError.textContent = "Não foi possível salvar sua avaliação. Tente novamente.";
+      submitError.classList.remove("hidden");
+      return;
+    }
+
+    submitConfirmation.classList.remove("hidden");
+    submitBtn.disabled = true;
+  });
+})();
+</script>
+</body>
+</html>
